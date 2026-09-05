@@ -1,4 +1,4 @@
-import { load } from 'cheerio';
+import { type CheerioAPI, load } from 'cheerio';
 
 import type { DataItem, Route } from '@/types';
 import cache from '@/utils/cache';
@@ -20,6 +20,31 @@ export const fetchDomainInfoUrl = async () => {
     } catch {
         return fallbackUrl;
     }
+};
+
+export const parseThreadList = ($: CheerioAPI, currentHost: string, responseUrl: string) => {
+    const rows = $('#ajaxtable tbody .tr2').last().nextAll('.tr3').toArray();
+    const fallbackRows = rows.length > 0 ? rows : $('tr.tr3').toArray();
+    const list = fallbackRows
+        .map((item): (DataItem & { link: string; guid: string }) | null => {
+            const $item = $(item).find('a.subject, a[href*="read.php?tid="]').first();
+            const href = $item.attr('href');
+
+            return href
+                ? {
+                      title: $item.text(),
+                      link: new URL(href, `${currentHost}/`).href,
+                      guid: `${fallbackUrl}/2048/${href}`,
+                  }
+                : null;
+        })
+        .filter((item): item is DataItem & { link: string; guid: string } => item !== null);
+
+    if (list.length === 0) {
+        throw new Error(`2048 route parsed 0 items from ${responseUrl}`);
+    }
+
+    return list;
 };
 
 export const route: Route = {
@@ -113,20 +138,7 @@ async function handler(ctx) {
     $('#shortcut').remove();
     $('tr[onmouseover="this.className=\'tr3 t_two\'"]').remove();
 
-    const list = $('#ajaxtable tbody .tr2')
-        .last()
-        .nextAll('.tr3')
-        .toArray()
-        .map((item): DataItem & { link: string; guid: string } => {
-            const $item = $(item).find('a.subject');
-
-            return {
-                title: $item.text(),
-                link: `${currentHost}/${$item.attr('href')}`,
-                guid: `${fallbackUrl}/2048/${$item.attr('href')}`,
-            };
-        })
-        .filter((item) => !item.link.includes('undefined'));
+    const list = parseThreadList($, currentHost, response.url);
 
     const items = await Promise.all(
         list.map((item) =>

@@ -1,6 +1,7 @@
+import { load } from 'cheerio';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchDomainInfoUrl } from './index';
+import { fetchDomainInfoUrl, parseThreadList } from './index';
 
 const ofetchMock = vi.hoisted(() => vi.fn());
 
@@ -34,5 +35,48 @@ describe('2048 domain info URL', () => {
         }
 
         await expect(fetchDomainInfoUrl()).resolves.toBe('https://hjd2048.com');
+    });
+});
+
+describe('2048 thread list', () => {
+    it('extracts rows following the last section header', () => {
+        const $ = load(`
+            <table id="ajaxtable"><tbody>
+                <tr class="tr3"><td><a class="subject" href="read.php?tid=ignored">Ignored</a></td></tr>
+                <tr class="tr2"></tr>
+                <tr class="tr3"><td><a class="subject" href="read.php?tid=123">Thread</a></td></tr>
+            </tbody></table>
+        `);
+
+        expect(parseThreadList($, 'https://example.com', 'https://example.com/thread.php')).toEqual([
+            {
+                title: 'Thread',
+                link: 'https://example.com/read.php?tid=123',
+                guid: 'https://hjd2048.com/2048/read.php?tid=123',
+            },
+        ]);
+    });
+
+    it('falls back to all thread rows and skips links without href', () => {
+        const $ = load(`
+            <table><tbody>
+                <tr class="tr3"><td><a class="subject">Missing href</a></td></tr>
+                <tr class="tr3"><td><a href="/read.php?tid=456">Fallback thread</a></td></tr>
+            </tbody></table>
+        `);
+
+        expect(parseThreadList($, 'https://example.com', 'https://example.com/thread.php')).toEqual([
+            {
+                title: 'Fallback thread',
+                link: 'https://example.com/read.php?tid=456',
+                guid: 'https://hjd2048.com/2048//read.php?tid=456',
+            },
+        ]);
+    });
+
+    it('throws a diagnostic error when no threads can be parsed', () => {
+        const $ = load('<html><title>Interstitial</title></html>');
+
+        expect(() => parseThreadList($, 'https://example.com', 'https://example.com/interstitial')).toThrow('2048 route parsed 0 items from https://example.com/interstitial');
     });
 });
