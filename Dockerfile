@@ -55,6 +55,9 @@ COPY --from=dep-version-parser /ver/* /minifier/
 ARG USE_CHINA_NPM_REGISTRY=0
 RUN \
     set -ex && \
+    apt-get update && \
+    apt-get install -yq --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/* && \
     if [ "$USE_CHINA_NPM_REGISTRY" = 1 ]; then \
         npm config set registry https://registry.npmmirror.com && \
         yarn config set registry https://registry.npmmirror.com && \
