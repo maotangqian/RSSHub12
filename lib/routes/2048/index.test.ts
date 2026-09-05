@@ -1,7 +1,7 @@
 import { load } from 'cheerio';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchDomainInfoUrl, parseThreadList } from './index';
+import { buildThreadListUrl, fetchDomainInfoUrl, parseThreadList } from './index';
 
 const ofetchMock = vi.hoisted(() => vi.fn());
 
@@ -39,6 +39,10 @@ describe('2048 domain info URL', () => {
 });
 
 describe('2048 thread list', () => {
+    it.each(['https://hjd2048.com', 'https://hjd2048.com/captcha/'])('builds the current thread list URL from %s', (baseUrl) => {
+        expect(buildThreadListUrl(baseUrl, '21')).toBe('https://hjd2048.com/2048/thread.php?fid=21');
+    });
+
     it('extracts rows following the last section header', () => {
         const $ = load(`
             <table id="ajaxtable"><tbody>
