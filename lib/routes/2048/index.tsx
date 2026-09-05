@@ -130,7 +130,8 @@ async function handler(ctx) {
         86400, // fixed cookie duration: 24 hours
         false
     );
-    const currentUrl = buildThreadListUrl(redirected.url, id);
+    // Construct canonical thread URL using fallback host to match expected pattern
+    const currentUrl = buildThreadListUrl(fallbackUrl, id);
 
     const response = await ofetch.raw(currentUrl, {
         headers: {
