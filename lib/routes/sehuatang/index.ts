@@ -9,6 +9,13 @@ import timezone from '@/utils/timezone';
 
 const host = 'https://www.sehuatang.net/';
 
+const requestHeaders = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    referer: host,
+};
+
 const forumIdMaps = {
     // 原创 BT 电影
     gcyc: '2', //     国产原创
@@ -70,12 +77,16 @@ const getSafeId = () =>
     cache.tryGet(
         'sehuatang:safeid',
         async () => {
-            const response = await ofetch(host);
-            const $ = load(response);
-            const safeId = $('script:contains("safeid")')
-                .text()
-                .match(/safeid\s*=\s*'(.+)';/)?.[1];
-            return safeId ?? '';
+            try {
+                const response = await ofetch(host, { headers: requestHeaders });
+                const $ = load(response);
+                const safeId = $('script:contains("safeid")')
+                    .text()
+                    .match(/safeid\s*=\s*'(.+)';/)?.[1];
+                return safeId ?? '';
+            } catch {
+                return '';
+            }
         },
         config.cache.routeExpire,
         false
@@ -87,8 +98,10 @@ async function handler(ctx) {
     const type = ctx.req.param('type');
     const typefilter = type ? `&filter=typeid&typeid=${type}` : '';
     const link = `${host}forum.php?mod=forumdisplay&orderby=dateline&fid=${subformId}${typefilter}`;
+    const safeId = await getSafeId();
     const headers = {
-        Cookie: `_safe=${await getSafeId()};`,
+        ...requestHeaders,
+        ...(safeId && { cookie: `_safe=${safeId};` }),
     };
 
     const response = await ofetch(link, {
