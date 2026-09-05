@@ -6,24 +6,12 @@ import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
-const fallbackUrl = 'https://hjd2048.com';
+const fallbackUrl = 'https://bbs.vsbskpo.com';
 
-export const fetchDomainInfoUrl = async () => {
-    try {
-        const response = await ofetch('https://2048.info');
-        const $ = load(response);
-        const onclickValue = $('.button').first().attr('onclick');
-        const targetUrl = onclickValue?.match(/window\.open\('([^']+)'/)?.[1];
-        const url = targetUrl && new URL(targetUrl, 'https://2048.info');
-
-        return url && ['http:', 'https:'].includes(url.protocol) ? url.href : fallbackUrl;
-    } catch {
-        return fallbackUrl;
-    }
-};
+export const fetchDomainInfoUrl = () => fallbackUrl;
 
 export const buildThreadListUrl = (baseUrl: string, id: string) => {
-    const url = new URL('/2048/thread.php', baseUrl);
+    const url = new URL('/thread.php', baseUrl);
     url.searchParams.set('fid', id);
     return url.href;
 };
@@ -130,8 +118,8 @@ async function handler(ctx) {
         86400, // fixed cookie duration: 24 hours
         false
     );
-    // Construct canonical thread URL using fallback host to match expected pattern
-    const currentUrl = buildThreadListUrl(fallbackUrl, id);
+    // Construct thread URL using active redirected host
+    const currentUrl = buildThreadListUrl(redirected.url, id);
 
     const response = await ofetch.raw(currentUrl, {
         headers: {
