@@ -62,6 +62,7 @@ describe('2048 thread list', () => {
             <table><tbody>
                 <tr class="tr3"><td><a class="subject">Missing href</a></td></tr>
                 <tr class="tr3"><td><a href="/read.php?tid=456">Fallback thread</a></td></tr>
+                <tr class="tr3"><td><a href="read.php?tid=789">Another fallback thread</a></td></tr>
             </tbody></table>
         `);
 
@@ -70,6 +71,11 @@ describe('2048 thread list', () => {
                 title: 'Fallback thread',
                 link: 'https://example.com/read.php?tid=456',
                 guid: 'https://hjd2048.com/2048//read.php?tid=456',
+            },
+            {
+                title: 'Another fallback thread',
+                link: 'https://example.com/read.php?tid=789',
+                guid: 'https://hjd2048.com/2048/read.php?tid=789',
             },
         ]);
     });
