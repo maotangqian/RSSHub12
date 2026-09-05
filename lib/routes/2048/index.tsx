@@ -22,6 +22,12 @@ export const fetchDomainInfoUrl = async () => {
     }
 };
 
+export const buildThreadListUrl = (baseUrl: string, id: string) => {
+    const url = new URL('/2048/thread.php', baseUrl);
+    url.searchParams.set('fid', id);
+    return url.href;
+};
+
 export const parseThreadList = ($: CheerioAPI, currentHost: string, responseUrl: string) => {
     const rows = $('#ajaxtable tbody .tr2').last().nextAll('.tr3').toArray();
     const fallbackRows = rows.length > 0 ? rows : $('tr.tr3').toArray();
@@ -51,7 +57,7 @@ export const route: Route = {
     path: '/:id?',
     categories: ['multimedia'],
     example: '/2048/2',
-    parameters: { id: '板块 ID, 见下表，默认为最新合集，即 `3`，亦可在 URL 中找到, 例如, `thread.php?fid-3.html`中, 板块 ID 为`3`' },
+    parameters: { id: '板块 ID, 见下表，默认为最新合集，即 `3`，亦可在 URL 中找到, 例如, `thread.php?fid=3`中, 板块 ID 为`3`' },
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -124,7 +130,7 @@ async function handler(ctx) {
         86400, // fixed cookie duration: 24 hours
         false
     );
-    const currentUrl = `${redirected.url}thread.php?fid-${id}.html`;
+    const currentUrl = buildThreadListUrl(redirected.url, id);
 
     const response = await ofetch.raw(currentUrl, {
         headers: {
