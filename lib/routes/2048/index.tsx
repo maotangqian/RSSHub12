@@ -6,6 +6,22 @@ import ofetch from '@/utils/ofetch';
 import { parseDate } from '@/utils/parse-date';
 import timezone from '@/utils/timezone';
 
+const fallbackUrl = 'https://hjd2048.com';
+
+export const fetchDomainInfoUrl = async () => {
+    try {
+        const response = await ofetch('https://2048.info');
+        const $ = load(response);
+        const onclickValue = $('.button').first().attr('onclick');
+        const targetUrl = onclickValue?.match(/window\.open\('([^']+)'/)?.[1];
+        const url = targetUrl && new URL(targetUrl, 'https://2048.info');
+
+        return url && ['http:', 'https:'].includes(url.protocol) ? url.href : fallbackUrl;
+    } catch {
+        return fallbackUrl;
+    }
+};
+
 export const route: Route = {
     path: '/:id?',
     categories: ['multimedia'],
@@ -63,16 +79,8 @@ export const route: Route = {
 async function handler(ctx) {
     const id = ctx.req.param('id') ?? '3';
 
-    const rootUrl = 'https://hjd2048.com';
     // 获取地址发布页指向的 URL
-    const domainInfo = await cache.tryGet('2048:domainInfo', async () => {
-        const response = await ofetch('https://2048.info');
-        const $ = load(response);
-        const onclickValue = $('.button').first().attr('onclick');
-        const targetUrl = onclickValue?.match(/window\.open\('([^']+)'/)?.[1];
-
-        return { url: new URL(targetUrl!, 'https://2048.info').href };
-    });
+    const domainInfo = await cache.tryGet('2048:domainInfo', async () => ({ url: await fetchDomainInfoUrl() }));
     // 获取重定向后的url
     const redirectResponse = await ofetch.raw(domainInfo.url);
     const redirected = await cache.tryGet(
@@ -115,7 +123,7 @@ async function handler(ctx) {
             return {
                 title: $item.text(),
                 link: `${currentHost}/${$item.attr('href')}`,
-                guid: `${rootUrl}/2048/${$item.attr('href')}`,
+                guid: `${fallbackUrl}/2048/${$item.attr('href')}`,
             };
         })
         .filter((item) => !item.link.includes('undefined'));
