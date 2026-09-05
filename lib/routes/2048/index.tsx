@@ -157,6 +157,7 @@ async function handler(ctx) {
                     content(el).replaceWith(`<img src="${imgSrc}">`);
                 });
 
+                item.title = content('title').text() || item.title;
                 item.author = content('.fl.black').first().text();
                 item.pubDate = timezone(parseDate(content('span.fl.gray').first().attr('title')!), 8);
 
