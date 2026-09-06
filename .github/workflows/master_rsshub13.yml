@@ -50,6 +50,18 @@ jobs:
               with:
                   name: node-app
 
+            - name: Set up pnpm (deploy runner)
+              uses: pnpm/action-setup@v4
+
+            - name: Set up Node.js (deploy runner)
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.22.2
+                  cache: pnpm
+
+            - name: Install production dependencies (deploy runner)
+              run: pnpm install --frozen-lockfile --prod --shamefully-hoist
+
             - name: Login to Azure
               uses: azure/login@v2
               with:
