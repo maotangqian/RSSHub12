@@ -59,6 +59,7 @@
         "worker-test": "npm run worker-build && vitest run lib/worker.test.ts"
     },
     "dependencies": {
+        "@asteasolutions/zod-to-openapi": "^8.x",
         "@bbob/html": "4.4.1",
         "@bbob/plugin-helper": "4.4.1",
         "@bbob/preset-html5": "4.4.1",
