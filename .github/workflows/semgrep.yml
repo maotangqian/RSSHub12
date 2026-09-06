@@ -23,7 +23,12 @@ jobs:
             security-events: write
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-            - run: semgrep ci --sarif > semgrep.sarif
+            - run: |
+                  if [ -n "$SEMGREP_APP_TOKEN" ]; then
+                      semgrep ci --sarif > semgrep.sarif
+                  else
+                      semgrep scan --config auto --sarif > semgrep.sarif
+                  fi
               env:
                   SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
             - name: Upload SARIF file for GitHub Advanced Security Dashboard
